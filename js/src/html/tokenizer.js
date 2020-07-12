@@ -245,6 +245,7 @@ Tokenizer.prototype._read_close = function(c, open_token) {
 Tokenizer.prototype._read_attribute = function(c, previous_token, open_token) {
   var token = null;
   var resulting_string = '';
+  var smarty_regex = /{{?.([^{}]|{([^{}])*})*}}?/g;
   if (open_token && open_token.text[0] === '<') {
 
     if (c === '=') {
@@ -253,8 +254,14 @@ Tokenizer.prototype._read_attribute = function(c, previous_token, open_token) {
       var content = this._input.next();
       if (c === '"') {
         content += this.__patterns.double_quote.read();
+        while (content.replace(smarty_regex, '').search('{') >= 0) {
+          content += this.__patterns.double_quote.read();
+        }
       } else {
         content += this.__patterns.single_quote.read();
+        while (content.replace(smarty_regex, '').search('{') >= 0) {
+          content += this.__patterns.double_quote.read();
+        }
       }
       token = this._create_token(TOKEN.VALUE, content);
     } else {
